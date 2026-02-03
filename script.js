@@ -4,12 +4,13 @@ const resetButton = document.getElementById("reset");
 const modeSelector = document.getElementById("mode");
 const canvas = document.getElementById('confetti');
 const ctx = canvas.getContext('2d');
+const themeToggle = document.getElementById('themeToggle');
 
 let board = ["","","","","","","","",""];
 let player = "X";
 let bot = "O";
 let gameActive = true;
-
+let botThinking = false;
 const winningConditions = [
     [0,1,2],[3,4,5],[6,7,8],
     [0,3,6],[1,4,7],[2,5,8],
@@ -20,17 +21,19 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 let thinkingInterval;
+let confettiAnimationId;
 
 // ----------------- Game -----------------
 function handleCellClick(e){
     const idx = e.target.dataset.index;
-    if(!gameActive || board[idx]!=="") return;
+    if(!gameActive || board[idx]!="" || botThinking) return; // block click if bot thinking
 
     makeMove(idx, player);
     if(checkResult(player)) return;
 
     botThinkingAnimation();
-    setTimeout(botMove, 700); // bot thinking delay
+    botThinking = true;
+    setTimeout(botMove, 700);
 }
 
 function makeMove(idx, symbol){
@@ -55,6 +58,7 @@ function checkResult(current){
 
     if(winner){
         stopThinking();
+        botThinking = false;
         if(winner===player) status.textContent="You win! 🎉";
         else status.textContent="Bot wins! 🤖";
         gameActive=false;
@@ -62,6 +66,7 @@ function checkResult(current){
         return true;
     } else if(!board.includes("")){
         stopThinking();
+        botThinking = false;
         status.textContent="It's a draw! 🤝";
         gameActive=false;
         return true;
@@ -85,6 +90,7 @@ function botMove(){
 
     makeMove(idx, bot);
     checkResult(bot);
+    botThinking = false;
 }
 
 // Easy: Random
@@ -111,7 +117,7 @@ function checkWinnerSim(bd,sym){
     return false;
 }
 
-// Hard: Perfect Minimax
+// Hard: Minimax
 function getBestMove(){
     let bestScore=-Infinity; let move;
     for(let i=0;i<9;i++){
@@ -179,7 +185,7 @@ function launchConfetti(){
             p.y+=p.dy;
             if(p.y>canvas.height){ p.y=-10; p.x=Math.random()*canvas.width; }
         });
-        requestAnimationFrame(draw);
+        confettiAnimationId = requestAnimationFrame(draw);
     }
     draw();
 }
@@ -188,14 +194,33 @@ function launchConfetti(){
 function resetGame(){
     board=["","","","","","","","",""];
     gameActive=true;
+    botThinking=false;
+    stopThinking();
+    if(confettiAnimationId) cancelAnimationFrame(confettiAnimationId);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
     status.textContent="Your turn";
     cells.forEach(c=>{
         c.textContent="";
         c.dataset.symbol="";
         c.classList.remove('x','o','winner');
     });
-    ctx.clearRect(0,0,canvas.width,canvas.height);
 }
 
 cells.forEach(c=>c.addEventListener('click', handleCellClick));
 resetButton.addEventListener('click', resetGame);
+
+// ----------------- Theme Toggle with Persistence -----------------
+if(localStorage.getItem('theme') === 'dark'){
+    document.body.classList.add('dark');
+    themeToggle.checked = true;
+}
+themeToggle.addEventListener('change', ()=>{
+    if(themeToggle.checked){
+        document.body.classList.add('dark');
+        localStorage.setItem('theme','dark');
+    } else {
+        document.body.classList.remove('dark');
+        localStorage.setItem('theme','light');
+    }
+});
