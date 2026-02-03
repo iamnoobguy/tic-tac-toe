@@ -165,11 +165,11 @@ function launchConfetti(){
     const colors = ['#ff0','#f0f','#0ff','#f00','#0f0','#00f'];
     for(let i=0;i<150;i++){
         confetti.push({
-            x:Math.random()*canvas.width,
-            y:Math.random()*canvas.height-100,
-            r:Math.random()*6+4,
-            dx:(Math.random()-0.5)*5,
-            dy:Math.random()*5+2,
+            x: Math.random()*canvas.width,
+            y: Math.random()*-canvas.height,   // start above top
+            r: Math.random()*6+4,
+            dx: (Math.random()-0.5)*5,
+            dy: Math.random()*5+2,
             color: colors[Math.floor(Math.random()*colors.length)]
         });
     }
@@ -179,11 +179,11 @@ function launchConfetti(){
         confetti.forEach(p=>{
             ctx.beginPath();
             ctx.arc(p.x,p.y,p.r,0,2*Math.PI);
-            ctx.fillStyle=p.color;
+            ctx.fillStyle = p.color;
             ctx.fill();
-            p.x+=p.dx;
-            p.y+=p.dy;
-            if(p.y>canvas.height){ p.y=-10; p.x=Math.random()*canvas.width; }
+            p.x += p.dx;
+            p.y += p.dy;
+            if(p.y > canvas.height){ p.y=-10; p.x=Math.random()*canvas.width; } // reset to top
         });
         confettiAnimationId = requestAnimationFrame(draw);
     }
